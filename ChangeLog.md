@@ -31,6 +31,13 @@ Current Trunk
 - Reject promises returned from the factory function created by using the
   MODULARIZE build option if initialization of the module instance fails
   (#12396).
+- The system for linking native libraries on demand (based on the symbols
+  present in input object files) has been removed.  Libraries such as libgl,
+  libal, and libhtml5 are now included on the link line by default unless
+  `-s AUTO_NATIVE_LIBRARIES=0` is used.  This should not effect most builds
+  in any way since wasm-ld ignores unreferenced library files.  Only users
+  of the `--whole-archive` linker flag (which is used when `MAIN_MODULE=1` is
+  set) should be effected.
 
 2.0.7: 10/13/2020
 -----------------

@@ -1250,6 +1250,7 @@ There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR P
 
     if shared.Settings.STRICT:
       shared.Settings.STRICT_JS = 1
+      shared.Settings.AUTO_NATIVE_LIBRARIES = 0
       shared.Settings.AUTO_JS_LIBRARIES = 0
       shared.Settings.AUTO_ARCHIVE_INDEXES = 0
       shared.Settings.IGNORE_MISSING_MAIN = 0
