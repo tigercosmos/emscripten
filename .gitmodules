@@ -1,0 +1,3 @@
+[submodule "tests/third_party/wasi-test-suite"]
+	path = tests/third_party/wasi-test-suite
+	url = https://github.com/khronosproject/wasi-test-suite

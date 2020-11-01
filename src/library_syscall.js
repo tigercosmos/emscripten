@@ -1444,7 +1444,16 @@ function wrapSyscallFunction(x, library, isWasi) {
   var canThrow = library[x + '__nothrow'] !== true;
 #endif
 
-  var pre = '', post = '';
+  if (!library[x + '__deps']) library[x + '__deps'] = [];
+  library[x + '__deps'].push('$SYSCALLS');
+
+#if PURE_WASI
+  var pre = '\nif (!HEAPU8.byteLength) _emscripten_notify_memory_growth(0);\n'
+  library[x + '__deps'].push('emscripten_notify_memory_growth');
+#else
+  var pre = '';
+#endif
+  var post = '';
   if (isVariadic) {
     pre += 'SYSCALLS.varargs = varargs;\n';
   }
@@ -1457,7 +1466,7 @@ function wrapSyscallFunction(x, library, isWasi) {
       post += 'SYSCALLS.varargs = undefined;\n';
     }
   }
-  pre += "err('syscall! " + x + "');\n";
+  pre += "err('syscall! " + x + " : ' + Array.from(arguments));\n";
   pre += "var canWarn = true;\n";
   pre += "var ret = (function() {\n";
   post += "})();\n";
@@ -1499,8 +1508,6 @@ function wrapSyscallFunction(x, library, isWasi) {
     t = t.substring(0, bodyEnd) + post + t.substring(bodyEnd);
   }
   library[x] = eval('(' + t + ')');
-  if (!library[x + '__deps']) library[x + '__deps'] = [];
-  library[x + '__deps'].push('$SYSCALLS');
 #if USE_PTHREADS
   // Most syscalls need to happen on the main JS thread (e.g. because the
   // filesystem is in JS and on that thread). Proxy synchronously to there.
