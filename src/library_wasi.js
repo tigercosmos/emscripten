@@ -11,6 +11,10 @@ var WasiLibrary = {
     _exit(code);
   },
 
+  // This object can be modified by the user during startup, which affects
+  // the initial values of the environment accessible by getEnvStrings/getenv.
+  $ENV: {},
+
   $getEnvStrings__deps: ['$ENV', '$getExecutableName'],
   $getEnvStrings: function() {
     if (!getEnvStrings.strings) {

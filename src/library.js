@@ -703,11 +703,6 @@ LibraryManager.library = {
 #endif
   },
 
-  // This object can be modified by the user during startup, which affects
-  // the initial values of the environment accessible by getenv. (This works
-  // in both fastcomp and upstream).
-  $ENV: {},
-
   getloadavg: function(loadavg, nelem) {
     // int getloadavg(double loadavg[], int nelem);
     // http://linux.die.net/man/3/getloadavg
