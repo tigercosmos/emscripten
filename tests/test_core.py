@@ -317,6 +317,7 @@ class TestCoreBase(RunnerCore):
 
   @also_with_standalone_wasm()
   def test_hello_world(self):
+    #self.emcc_args += ['-sSYSCALL_DEBUG']
     self.do_run_in_out_file_test('tests', 'core', 'test_hello_world.c')
     # must not emit this unneeded internal thing
     self.assertNotContained('EMSCRIPTEN_GENERATED_FUNCTIONS', open('test_hello_world.js').read())
@@ -3028,7 +3029,7 @@ Var: 42
     export_count = get_data_export_count('test_dlfcn_self.wasm')
     # ensure there aren't too many globals; we don't want unnamed_addr
     self.assertGreater(export_count, 20)
-    self.assertLess(export_count, 56)
+    self.assertLess(export_count, 58)
 
   @needs_dlfcn
   def test_dlfcn_unique_sig(self):
@@ -5068,9 +5069,6 @@ main( int argv, char ** argc ) {
     self.do_run_in_out_file_test('tests', 'core', 'test_std_function_incomplete_return.cpp')
 
   def test_istream(self):
-    # needs to flush stdio streams
-    self.set_setting('EXIT_RUNTIME', 1)
-
     for linkable in [0]: # , 1]:
       print(linkable)
       # regression check for issue #273
@@ -8278,7 +8276,7 @@ def make_run(name, emcc_args, settings=None, env=None):
 # Main wasm test modes
 wasm0 = make_run('wasm0', emcc_args=['-O0'])
 wasm0g = make_run('wasm0g', emcc_args=['-O0', '-g'])
-wasm1 = make_run('wasm1', emcc_args=['-O1'])
+wasm1 = make_run('wasm1', emcc_args=['-O1', '-g'])
 wasm2 = make_run('wasm2', emcc_args=['-O2'])
 wasm2g = make_run('wasm2g', emcc_args=['-O2', '-g'])
 wasm3 = make_run('wasm3', emcc_args=['-O3'])

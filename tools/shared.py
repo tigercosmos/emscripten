@@ -490,6 +490,7 @@ def emsdk_cflags(user_args, cxx):
     os.path.join('/include', 'compat'),
     os.path.join('/include', 'libc'),
     os.path.join('/lib', 'libc', 'musl', 'arch', 'emscripten'),
+    os.path.join('/lib', 'libc', 'musl', 'arch', 'generic'),
     os.path.join('/local', 'include'),
     os.path.join('/include', 'SSE'),
     os.path.join('/include', 'neon'),

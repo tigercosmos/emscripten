@@ -196,6 +196,7 @@ def inspect_headers(headers, cpp_opts):
   for header in headers:
     code.append('#include "' + header['name'] + '"')
 
+  #code.append('#undef hidden')
   code.append('int main() {')
   c_descent('structs', code)
   for header in headers:
@@ -297,16 +298,6 @@ def merge_info(target, src):
     target['structs'][key] = value
 
 
-def inspect_code(headers, cpp_opts):
-  if True:
-    info = inspect_headers(headers, cpp_opts)
-  else:
-    info = {'defines': {}, 'structs': {}}
-    for header in headers:
-      merge_info(info, inspect_headers([header], cpp_opts))
-  return info
-
-
 def parse_json(path, header_files):
   with open(path, 'r') as stream:
     # Remove comments before loading the JSON.
@@ -352,25 +343,15 @@ def output_json(obj, stream=None):
   stream.close()
 
 
-def filter_opts(opts):
-  # Only apply compiler options regarding syntax, includes and defines.
-  # We have to compile for the current system, we aren't compiling to bitcode after all.
-  out = []
-  for flag in opts:
-    if flag[:2] in ('-f', '-I', '-i', '-D', '-U'):
-      out.append(flag)
-
-  return out
-
-
 def main(args):
   global QUIET
 
   default_json = shared.path_from_root('src', 'struct_info.json')
+  internal_json = shared.path_from_root('src', 'struct_info_internal.json')
   parser = argparse.ArgumentParser(description='Generate JSON infos for structs.')
-  parser.add_argument('json', nargs='*',
-                      help='JSON file with a list of structs and their fields (defaults to src/struct_info.json)',
-                      default=[default_json])
+  parser.add_argument('headers', nargs='*',
+                      help='A header (.h) file or a JSON file with a list of structs and their fields (defaults to src/struct_info.json)',
+                      default=[default_json, internal_json])
   parser.add_argument('-q', dest='quiet', action='store_true', default=False,
                       help='Don\'t output anything besides error messages.')
   parser.add_argument('-o', dest='output', metavar='path', default=None,
@@ -400,13 +381,12 @@ def main(args):
 
   # Look for structs in all passed headers.
   header_files = []
+  struct_info = {'defines': {}, 'structs': {}}
 
   for f in args.json:
     # This is a JSON file, parse it.
     parse_json(f, header_files, structs, defines)
 
-  # Inspect all collected structs.
-  struct_info = inspect_code(header_files, cpp_opts)
   output_json(struct_info, args.output)
   return 0
 

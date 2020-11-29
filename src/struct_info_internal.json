@@ -1,0 +1,32 @@
+[
+    {
+        "file": "../lib/libc/musl/src/internal/pthread_impl.h",
+        "structs": {
+            "pthread": [
+              "threadStatus",
+              "threadExitCode",
+              "profilerBlock",
+              "self",
+              "tsd",
+              "tsd_used",
+              "detach_state",
+              "stack",
+              "stack_size",
+              "attr",
+              "robust_list",
+              "tid",
+              "canceldisable",
+              "cancelasync",
+              "locale"
+            ]
+        }
+    },
+    {
+        "file": "../lib/libc/musl/src/internal/libc.h",
+        "structs": {
+            "libc": [
+              "global_locale"
+            ]
+        }
+    }
+]

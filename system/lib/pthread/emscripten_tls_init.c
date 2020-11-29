@@ -11,6 +11,10 @@
 // linker-generated symbol that loads static TLS data at the given location.
 extern void __wasm_init_tls(void *memory);
 
+extern int __cxa_thread_atexit(void (*)(void *), void *, void *);
+
+extern int __dso_handle;
+
 // Note that ASan constructor priority is 50, and we must be higher.
 __attribute__((constructor(49)))
 void emscripten_tls_init(void) {
@@ -19,6 +23,6 @@ void emscripten_tls_init(void) {
   if (tls_size) {
     void *tls_block = emscripten_builtin_memalign(tls_align, tls_size);
     __wasm_init_tls(tls_block);
-    pthread_cleanup_push(emscripten_builtin_free, tls_block);
+    __cxa_thread_atexit(emscripten_builtin_free, tls_block, &__dso_handle);
   }
 }

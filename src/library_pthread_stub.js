@@ -17,20 +17,21 @@ var LibraryPThreadStub = {
 #endif
   },
 
-  pthread_cleanup_push__sig: 'vii',
-  pthread_cleanup_push: function(routine, arg) {
+  _pthread_cleanup_push__sig: 'viii',
+  _pthread_cleanup_push: function(ptr, routine, arg) {
     __ATEXIT__.push({ func: routine, arg: arg });
-    _pthread_cleanup_push.level = __ATEXIT__.length;
+    __pthread_cleanup_push.level = __ATEXIT__.length;
   },
 
-  pthread_cleanup_pop__sig: 'vi',
-  pthread_cleanup_pop: function(execute) {
-    assert(_pthread_cleanup_push.level == __ATEXIT__.length, 'cannot pop if something else added meanwhile!');
+  _pthread_cleanup_pop__deps: ['_pthread_cleanup_push'],
+  _pthread_cleanup_pop__sig: 'vii',
+  _pthread_cleanup_pop: function(ptr, execute) {
+    assert(__pthread_cleanup_push.level == __ATEXIT__.length, 'cannot pop if something else added meanwhile!');
     callback = __ATEXIT__.pop();
     if (execute) {
       {{{ makeDynCall('vi', 'callback.func') }}}(callback.arg)
     }
-    _pthread_cleanup_push.level = __ATEXIT__.length;
+    __pthread_cleanup_push.level = __ATEXIT__.length;
   },
 
   {{{ USE_LSAN || USE_ASAN ? 'emscripten_builtin_' : '' }}}pthread_create: function() {

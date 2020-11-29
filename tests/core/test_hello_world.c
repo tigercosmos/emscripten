@@ -6,7 +6,9 @@
  */
 
 #include <stdio.h>
+//#include <emscripten.h>
 int main() {
+  //emscripten_log(EM_LOG_CONSOLE, "in main");
   printf("hello, world!\n");
   return 0;
 }

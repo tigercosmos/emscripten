@@ -10,6 +10,7 @@ import logging
 import os
 import re
 import shutil
+import subprocess
 import sys
 import tarfile
 import zipfile
@@ -28,7 +29,7 @@ LIBC_SOCKETS = ['socket.c', 'socketpair.c', 'shutdown.c', 'bind.c', 'connect.c',
                 'listen.c', 'accept.c', 'getsockname.c', 'getpeername.c', 'send.c',
                 'recv.c', 'sendto.c', 'recvfrom.c', 'sendmsg.c', 'recvmsg.c',
                 'getsockopt.c', 'setsockopt.c', 'freeaddrinfo.c',
-                'in6addr_any.c', 'in6addr_loopback.c']
+                'in6addr_any.c', 'in6addr_loopback.c', 'inet_addr.c']
 
 
 def files_in_path(path_components, filenames):
@@ -78,7 +79,11 @@ def run_one_command(cmd):
       del safe_env[opt]
   # TODO(sbc): Remove this one we remove the test_em_config_env_var test
   cmd.append('-Wno-deprecated')
-  shared.run_process(cmd, stdout=stdout, stderr=stderr, env=safe_env)
+  try:
+    shared.run_process(cmd, stdout=stdout, stderr=stderr, env=safe_env)
+  except subprocess.CalledProcessError as e:
+    print("'%s' failed (%d)" % (shared.shlex_join(e.cmd), e.returncode))
+    raise
 
 
 def run_build_commands(commands):
@@ -605,6 +610,7 @@ class NoExceptLibrary(Library):
 class MuslInternalLibrary(Library):
   includes = [
     ['system', 'lib', 'libc', 'musl', 'src', 'internal'],
+    ['system', 'lib', 'libc', 'musl', 'src', 'include'],
   ]
 
   cflags = [
@@ -679,7 +685,7 @@ class libc(AsanInstrumentedLibrary, MuslInternalLibrary, MTLibrary):
     ignore = [
         'ipc', 'passwd', 'thread', 'signal', 'sched', 'ipc', 'time', 'linux',
         'aio', 'exit', 'legacy', 'mq', 'search', 'setjmp', 'env',
-        'ldso', 'conf'
+        'ldso', 'conf', 'malloc'
     ]
 
     # individual files
@@ -690,7 +696,7 @@ class libc(AsanInstrumentedLibrary, MuslInternalLibrary, MTLibrary):
         'gethostbyname2_r.c', 'gethostbyname_r.c', 'gethostbyname2.c',
         'alarm.c', 'syscall.c', '_exit.c', 'popen.c',
         'getgrouplist.c', 'initgroups.c', 'wordexp.c', 'timer_create.c',
-        'faccessat.c',
+        'faccessat.c', 'getentropy.c',
         # 'process' exclusion
         'fork.c', 'vfork.c', 'posix_spawn.c', 'execve.c', 'waitid.c', 'system.c'
     ]
@@ -718,18 +724,14 @@ class libc(AsanInstrumentedLibrary, MuslInternalLibrary, MTLibrary):
     ignore = set(ignore)
     # TODO: consider using more math code from musl, doing so makes box2d faster
     for dirpath, dirnames, filenames in os.walk(musl_srcdir):
+      # Don't recurse into ingored directories
+      remove = [d for d in dirnames if d in ignore]
+      for r in remove:
+        dirnames.remove(r)
+
       for f in filenames:
-        if f.endswith('.c'):
-          if f in ignore:
-            continue
-          dir_parts = os.path.split(dirpath)
-          cancel = False
-          for part in dir_parts:
-            if part in ignore:
-              cancel = True
-              break
-          if not cancel:
-            libc_files.append(os.path.join(musl_srcdir, dirpath, f))
+        if f.endswith('.c') and f not in ignore:
+          libc_files.append(os.path.join(musl_srcdir, dirpath, f))
 
     # Allowed files from ignored modules
     libc_files += files_in_path(
@@ -738,6 +740,10 @@ class libc(AsanInstrumentedLibrary, MuslInternalLibrary, MTLibrary):
     libc_files += files_in_path(
         path_components=['system', 'lib', 'libc', 'musl', 'src', 'legacy'],
         filenames=['getpagesize.c', 'err.c'])
+
+    libc_files += files_in_path(
+        path_components=['system', 'lib', 'libc', 'musl', 'src', 'linux'],
+        filenames=['getdents.c'])
 
     libc_files += files_in_path(
         path_components=['system', 'lib', 'libc', 'musl', 'src', 'env'],
@@ -804,6 +810,7 @@ class libc(AsanInstrumentedLibrary, MuslInternalLibrary, MTLibrary):
           'pthread_mutex_getprioceiling.c', 'pthread_setcanceltype.c',
           'pthread_condattr_setclock.c', 'pthread_mutex_init.c',
           'pthread_setspecific.c', 'pthread_setcancelstate.c',
+          'lock_ptc.c',
         ])
       libc_files += files_in_path(
         path_components=['system', 'lib', 'pthread'],
@@ -832,21 +839,20 @@ class libprintf_long_double(libc):
 class libsockets(MuslInternalLibrary, MTLibrary):
   name = 'libsockets'
 
-  cflags = ['-Os', '-fno-builtin']
+  cflags = ['-Os', '-fno-builtin', '-Wno-shift-op-parentheses']
 
   def get_files(self):
     network_dir = shared.path_from_root('system', 'lib', 'libc', 'musl', 'src', 'network')
     return [os.path.join(network_dir, x) for x in LIBC_SOCKETS]
 
 
-class libsockets_proxy(MuslInternalLibrary, MTLibrary):
+class libsockets_proxy(MTLibrary):
   name = 'libsockets_proxy'
 
   cflags = ['-Os']
 
   def get_files(self):
-    return [shared.path_from_root('system', 'lib', 'websocket', 'websocket_to_posix_socket.cpp'),
-            shared.path_from_root('system', 'lib', 'libc', 'musl', 'src', 'network', 'inet_addr.c')]
+    return [shared.path_from_root('system', 'lib', 'websocket', 'websocket_to_posix_socket.cpp')]
 
 
 class crt1(MuslInternalLibrary):
@@ -1241,6 +1247,7 @@ class libubsan_minimal_rt_wasm(CompilerRTLibrary, MTLibrary):
 
 class libsanitizer_common_rt(CompilerRTLibrary, MTLibrary):
   name = 'libsanitizer_common_rt'
+  # TODO(sbc): We should need musl-internal headers here.
   includes = [['system', 'lib', 'libc', 'musl', 'src', 'internal'],
               ['system', 'lib', 'compiler-rt', 'lib']]
   never_force = True
