@@ -1,0 +1,2 @@
+src/stdio/__stdio_seek.c
+src/stat/fstat.c
