@@ -30,6 +30,6 @@ int main(void) {
     printf("main loop %i\n", ++cnt);
     result += bf->ReadLine(0);
   }
-  REPORT_RESULT(result);
+  return result;
 }
 

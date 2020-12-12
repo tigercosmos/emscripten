@@ -24,9 +24,5 @@ int main() {
   // Since EXIT_RUNTIME is not set the exit() in the thread is not expected to
   // bring down the whole process, only itself.
   printf("done join -- thread exited with %ld\n", (intptr_t)thread_rtn);
-#ifdef REPORT_RESULT
-  REPORT_RESULT(43);
-#endif
   return 43;
-#endif
 }

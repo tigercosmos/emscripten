@@ -21,7 +21,5 @@ int main() {
     putchar(c);
     ++nChars;
   }
-#ifdef REPORT_RESULT
-  REPORT_RESULT(nChars);
-#endif
+  return nChars;
 }
