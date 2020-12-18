@@ -61,7 +61,9 @@ if (wasmMemory) {
 
 // If the user provides an incorrect length, just use that length instead rather than providing the user to
 // specifically provide the memory length with Module['INITIAL_MEMORY'].
-INITIAL_MEMORY = buffer.byteLength;
+
+// OFFWORKER
+// INITIAL_MEMORY = buffer.byteLength;
 #if ASSERTIONS
 assert(INITIAL_MEMORY % {{{ WASM_PAGE_SIZE }}} === 0);
 #endif
