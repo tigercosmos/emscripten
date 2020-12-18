@@ -39,13 +39,15 @@ if (ENVIRONMENT_IS_PTHREAD) {
 #endif
     });
 #if USE_PTHREADS
-    if (!(wasmMemory.buffer instanceof SharedArrayBuffer)) {
-      err('requested a shared WebAssembly.Memory but the returned buffer is not a SharedArrayBuffer, indicating that while the browser has SharedArrayBuffer it does not have WebAssembly threads support - you may need to set a flag');
-      if (ENVIRONMENT_IS_NODE) {
-        console.log('(on node you may need: --experimental-wasm-threads --experimental-wasm-bulk-memory and also use a recent version)');
-      }
-      throw Error('bad memory');
-    }
+    // OFFWORKER
+
+    // if (!(wasmMemory.buffer instanceof SharedArrayBuffer)) {
+    //   err('requested a shared WebAssembly.Memory but the returned buffer is not a SharedArrayBuffer, indicating that while the browser has SharedArrayBuffer it does not have WebAssembly threads support - you may need to set a flag');
+    //   if (ENVIRONMENT_IS_NODE) {
+    //     console.log('(on node you may need: --experimental-wasm-threads --experimental-wasm-bulk-memory and also use a recent version)');
+    //   }
+    //   throw Error('bad memory');
+    // }
 #endif
   }
 
