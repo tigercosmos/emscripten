@@ -988,26 +988,16 @@ function createWasm() {
         !isFileURI(wasmBinaryFile) &&
 #endif
         typeof fetch === 'function') {
-      return fetch(wasmBinaryFile, { credentials: 'same-origin' }).then(function (response) {
-        var result = WebAssembly.instantiateStreaming(response, info);
-#if USE_OFFSET_CONVERTER
-        // This doesn't actually do another request, it only copies the Response object.
-        // Copying lets us consume it independently of WebAssembly.instantiateStreaming.
-        Promise.all([response.clone().arrayBuffer(), result]).then(function (results) {
-          wasmOffsetConverter = new WasmOffsetConverter(new Uint8Array(results[0]), results[1].module);
-          {{{ runOnMainThread("removeRunDependency('offset-converter');") }}}
-        }, function(reason) {
-          err('failed to initialize offset-converter: ' + reason);
-        });
-#endif
-        return result.then(receiveInstantiatedSource, function(reason) {
-            // We expect the most common failure cause to be a bad MIME type for the binary,
-            // in which case falling back to ArrayBuffer instantiation should work.
-            err('wasm streaming compile failed: ' + reason);
-            err('falling back to ArrayBuffer instantiation');
-            return instantiateArrayBuffer(receiveInstantiatedSource);
-          });
-      });
+          // OFFWORKER
+
+          var result = WebAssembly.instantiateStreaming(fetch(wasmBinaryFile, {
+              credentials: "same-origin"
+          }), info);
+          return result.then(receiveInstantiatedSource, function (reason) {
+              err("wasm streaming compile failed: " + reason);
+              err("falling back to ArrayBuffer instantiation");
+              return instantiateArrayBuffer(receiveInstantiatedSource)
+          })
     } else {
       return instantiateArrayBuffer(receiveInstantiatedSource);
     }
